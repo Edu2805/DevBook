@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "DevBook",
+            "type": "slogViewer",
+            "command": "cd api && go run .",
+            "problemMatcher": []
+        }
+    ]
+}
