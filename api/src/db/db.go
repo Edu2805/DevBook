@@ -8,7 +8,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func connect() (*sql.DB, error) {
+// Connect configura e abre a conexão com o banco de dados
+func Connect() (*sql.DB, error) {
 	db, dbError := sql.Open("pgx", config.StringDatabaseConnection)
 	if dbError != nil {
 		slog.Error("Erro ao abrir conexão com o banco de dados", "error", dbError)
