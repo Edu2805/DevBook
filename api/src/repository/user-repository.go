@@ -4,6 +4,7 @@ import (
 	"api/src/models"
 	"database/sql"
 	"log/slog"
+	"strings"
 )
 
 // Users representa um repositório de usuários
@@ -35,4 +36,46 @@ func (u Users) Create(usersModel models.User) (uint64, error) {
 	}
 
 	return id, nil
+}
+
+func (userRepository Users) FindByNameOrNick(nameOrNick string) ([]models.User, error) {
+	nameOrNick = strings.TrimSpace(nameOrNick)
+	if nameOrNick == "" {
+		return []models.User{}, nil
+	}
+
+	pattern := "%" + nameOrNick + "%"
+
+	rows, err := userRepository.db.Query(
+		`SELECT id, user_name, nick, email, created_at
+		 FROM users
+		 WHERE user_name ILIKE $1 OR nick LIKE $2`,
+		pattern,
+		pattern,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nick,
+			&user.Email,
+			&user.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
