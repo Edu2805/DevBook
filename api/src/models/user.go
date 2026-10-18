@@ -22,9 +22,9 @@ type User struct {
 	CreatedAt time.Time `json:"CreatedAt"`
 }
 
-// Prepare vai chamar os métodos para validar e formatar o usuário recebido
-func (user *User) Prepare() error {
-	if prepareError := user.validate(); prepareError != nil {
+// Prepare vai chamar os métodos para validar e formatar o usuário recebido. isRegister informa se o Prepare é usado no contexto de cadastro de usuário ou não
+func (user *User) Prepare(isRegister bool) error {
+	if prepareError := user.validate(isRegister); prepareError != nil {
 		return prepareError
 	}
 
@@ -32,7 +32,7 @@ func (user *User) Prepare() error {
 	return nil
 }
 
-func (user *User) validate() error {
+func (user *User) validate(isRegister bool) error {
 	if user.Name == "" {
 		slog.Warn(INVALID_EMPTY_NAME_MESSAGE)
 		return errors.New(INVALID_EMPTY_NAME_MESSAGE)
@@ -45,7 +45,7 @@ func (user *User) validate() error {
 		slog.Warn(INVALID_EMPTY_EMAIL_MESSAGE)
 		return errors.New(INVALID_EMPTY_EMAIL_MESSAGE)
 	}
-	if user.Password == "" {
+	if isRegister == true && user.Password == "" {
 		slog.Warn(INVALID_EMPTY_PASSWORD_MESSAGE)
 		return errors.New(INVALID_EMPTY_PASSWORD_MESSAGE)
 	}
