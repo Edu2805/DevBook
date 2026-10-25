@@ -182,5 +182,36 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 // DeleteUser: Exclui um usuário
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Deletando usuário"))
+	parameter := mux.Vars(r)
+
+	userID, err := strconv.ParseUint(parameter["userId"], 10, 64)
+	if err != nil {
+		slog.Error("Erro ao converter o parâmetro userId", "error", err)
+		response.ResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := db.Connect()
+	if err != nil {
+		slog.Error("Erro ao iniciar a conexão com o banco de dados na busca de usuários", "error", err)
+		response.ResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	userRepository := repository.NewUsersRepository(db)
+	if err = userRepository.DeleteUserById(userID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Warn("Usuário não encontrado", "warn", err)
+			response.JSON(w, http.StatusNotFound, map[string]string{
+				"erro": "Usuário não encontrado",
+			})
+			return
+		}
+		response.ResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	slog.Info("Usuário excluído com sucesso")
+	response.JSON(w, http.StatusNoContent, nil)
 }

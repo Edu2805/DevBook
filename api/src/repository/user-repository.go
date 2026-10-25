@@ -136,3 +136,23 @@ func (userRepository Users) UpdateUserById(userID uint64, user models.User) erro
 
 	return nil
 }
+
+// DeleteUserById exclui um usuário na base
+func (userRepository Users) DeleteUserById(userID uint64) error {
+	result, err := userRepository.db.Exec(
+		`DELETE FROM users WHERE id = $1`, userID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
