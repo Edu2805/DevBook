@@ -1,16 +1,21 @@
 package models
 
 import (
+	"api/constants"
+	"api/src/security"
 	"errors"
 	"log/slog"
 	"strings"
 	"time"
+
+	"github.com/badoux/checkmail"
 )
 
 const INVALID_EMPTY_NAME_MESSAGE = "O nome é obrigatório e não pode estar em branco."
 const INVALID_EMPTY_NICK_MESSAGE = "O nickname é obrigatório e não pode estar em branco."
 const INVALID_EMPTY_EMAIL_MESSAGE = "O email é obrigatório e não pode estar em branco."
 const INVALID_EMPTY_PASSWORD_MESSAGE = "A senha é obrigatória e não pode estar em branco."
+const INVALID_EMAIL_MESSAGE = "O email informado é inválido."
 
 // Usuário representa um usuário utilizando a rede social
 type User struct {
@@ -23,16 +28,18 @@ type User struct {
 }
 
 // Prepare vai chamar os métodos para validar e formatar o usuário recebido. isRegister informa se o Prepare é usado no contexto de cadastro de usuário ou não
-func (user *User) Prepare(isRegister bool) error {
-	if prepareError := user.validate(isRegister); prepareError != nil {
-		return prepareError
+func (user *User) Prepare(step string) error {
+	if err := user.validate(step); err != nil {
+		return err
 	}
 
-	user.formatStrings()
+	if err := user.formatStrings(step); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (user *User) validate(isRegister bool) error {
+func (user *User) validate(step string) error {
 	if user.Name == "" {
 		slog.Warn(INVALID_EMPTY_NAME_MESSAGE)
 		return errors.New(INVALID_EMPTY_NAME_MESSAGE)
@@ -45,7 +52,11 @@ func (user *User) validate(isRegister bool) error {
 		slog.Warn(INVALID_EMPTY_EMAIL_MESSAGE)
 		return errors.New(INVALID_EMPTY_EMAIL_MESSAGE)
 	}
-	if isRegister == true && user.Password == "" {
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
+		slog.Warn(INVALID_EMAIL_MESSAGE)
+		return errors.New(INVALID_EMAIL_MESSAGE)
+	}
+	if step == constants.USER_REGISTER && user.Password == "" {
 		slog.Warn(INVALID_EMPTY_PASSWORD_MESSAGE)
 		return errors.New(INVALID_EMPTY_PASSWORD_MESSAGE)
 	}
@@ -53,8 +64,17 @@ func (user *User) validate(isRegister bool) error {
 	return nil
 }
 
-func (user *User) formatStrings() {
+func (user *User) formatStrings(step string) error {
 	user.Name = strings.TrimSpace(user.Name)
 	user.Nick = strings.TrimSpace(user.Nick)
 	user.Email = strings.TrimSpace(user.Email)
+
+	if step == constants.USER_REGISTER {
+		passWithHash, err := security.Hash(user.Password)
+		if err != nil {
+			return err
+		}
+		user.Password = string(passWithHash)
+	}
+	return nil
 }

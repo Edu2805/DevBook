@@ -15,6 +15,8 @@ var (
 	StringDatabaseConnection = ""
 	// Port onde a API vai estar rodando
 	Port = 0
+	// SecretKey á a chave que vai ser usada para assinar o token
+	SecretKey []byte
 )
 
 // CarrLoadConfigs vai inicializar as variáveis de ambiente
@@ -38,5 +40,7 @@ func LoadConfigs() {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
 	)
+
+	SecretKey = []byte(os.Getenv("SECRET_KEY"))
 
 }

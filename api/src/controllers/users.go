@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"api/constants"
 	"api/src/db"
 	"api/src/models"
 	"api/src/repository"
@@ -34,7 +35,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if requestError = user.Prepare(true); requestError != nil {
+	if requestError = user.Prepare(constants.USER_REGISTER); requestError != nil {
 		response.ResponseError(w, http.StatusBadRequest, requestError)
 		return
 	}
@@ -45,6 +46,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		response.ResponseError(w, http.StatusInternalServerError, requestError)
 		return
 	}
+	defer db.Close()
 
 	repository := repository.NewUsersRepository(db)
 	user.ID, requestError = repository.Create(user)
@@ -149,7 +151,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = user.Prepare(false); err != nil {
+	if err = user.Prepare(constants.NOT_USER_REGISTER); err != nil {
 		response.ResponseError(w, http.StatusBadRequest, err)
 		return
 	}
