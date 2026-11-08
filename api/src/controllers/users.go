@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"api/constants"
+	"api/src/auth"
 	"api/src/db"
 	"api/src/models"
 	"api/src/repository"
@@ -137,6 +138,20 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userIDToken, err := auth.ExtractUserId(r)
+	if err != nil {
+		slog.Warn("Não autorizado.", "warn", err)
+		response.ResponseError(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if userID != userIDToken {
+		err = errors.New("Operação não permitida")
+		slog.Warn("Operação não permitida.", "warn", err)
+		response.ResponseError(w, http.StatusForbidden, err)
+		return
+	}
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		slog.Error("Erro ao enviar os dados do usuário", "error", err)
@@ -190,6 +205,20 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("Erro ao converter o parâmetro userId", "error", err)
 		response.ResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	userIDToken, err := auth.ExtractUserId(r)
+	if err != nil {
+		slog.Warn("Não autorizado.", "warn", err)
+		response.ResponseError(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if userID != userIDToken {
+		err = errors.New("Operação não permitida")
+		slog.Warn("Operação não permitida.", "warn", err)
+		response.ResponseError(w, http.StatusForbidden, err)
 		return
 	}
 

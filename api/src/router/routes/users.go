@@ -21,24 +21,24 @@ var routersUsers = []Route{
 		URI:          UsersURI,
 		Method:       http.MethodGet,
 		Function:     controllers.FindUsers,
-		RequiredAuth: false,
+		RequiredAuth: true,
 	},
 	{
 		URI:          UsersIDURI,
 		Method:       http.MethodGet,
 		Function:     controllers.FindUserById,
-		RequiredAuth: false,
+		RequiredAuth: true,
 	},
 	{
 		URI:          UsersIDURI,
 		Method:       http.MethodPut,
 		Function:     controllers.UpdateUser,
-		RequiredAuth: false,
+		RequiredAuth: true,
 	},
 	{
 		URI:          UsersIDURI,
 		Method:       http.MethodDelete,
 		Function:     controllers.DeleteUser,
-		RequiredAuth: false,
+		RequiredAuth: true,
 	},
 }

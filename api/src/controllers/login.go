@@ -53,7 +53,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, _ := auth.GenerateToken(existentUser.ID)
+	token, err := auth.GenerateToken(existentUser.ID)
+	if err != nil {
+		slog.Error("Erro ao gerar o token do usuário", "error", err)
+		response.ResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+	slog.Info("Login realizado com sucesso.")
 	fmt.Println(token)
 	w.Write([]byte(token))
 }
