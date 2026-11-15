@@ -184,3 +184,15 @@ func (userRepository Users) FindUserByEmail(email string) (models.User, error) {
 
 	return user, nil
 }
+
+// Follow permite que um usuário siga o outro e faz a persistencia no banco de dados
+func (userRepository Users) Follow(userID, followID uint64) error {
+	_, err := userRepository.db.Exec(
+		`INSERT INTO followers (user_id, follower_id) VALUES ($1, $2)
+			ON CONFLICT (user_id, follower_id) DO NOTHING`,
+		userID,
+		followID,
+	)
+
+	return err
+}

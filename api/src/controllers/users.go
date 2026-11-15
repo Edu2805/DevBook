@@ -20,6 +20,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const YOU_CANNOT_FOLLOW_YOURSELF_MESSAGE = "Não é possível seguir você mesmo."
+
 // CreateUser: Cria um usuário
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	bodyRequest, requestError := ioutil.ReadAll(r.Body)
@@ -245,4 +247,47 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Usuário excluído com sucesso")
 	response.JSON(w, http.StatusNoContent, nil)
+}
+
+// FollowUser permite que um usuário siga outtro usuário
+func FollowUser(w http.ResponseWriter, r *http.Request) {
+	followID, err := auth.ExtractUserId(r)
+	if err != nil {
+		slog.Warn("Não autorizado.", "warn", err)
+		response.ResponseError(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	params := mux.Vars(r)
+	userID, err := strconv.ParseUint(params["userId"], 10, 64)
+	if err != nil {
+		slog.Error("Erro ao converter o parâmetro userId", "error", err)
+		response.ResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if followID == userID {
+		slog.Warn(YOU_CANNOT_FOLLOW_YOURSELF_MESSAGE, "warn", errors.New(YOU_CANNOT_FOLLOW_YOURSELF_MESSAGE))
+		response.ResponseError(w, http.StatusBadRequest, errors.New(YOU_CANNOT_FOLLOW_YOURSELF_MESSAGE))
+		return
+	}
+
+	db, err := db.Connect()
+	if err != nil {
+		slog.Error("Erro ao iniciar a conexão com o banco de dados na busca de usuários", "error", err)
+		response.ResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	userRepository := repository.NewUsersRepository(db)
+	if err = userRepository.Follow(userID, followID); err != nil {
+		slog.Error("Erro ao seguir o usuário e persistir no banco de dados.", "error", err)
+		response.ResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	slog.Info("Usuário seguido com sucesso")
+	response.JSON(w, http.StatusNoContent, nil)
+
 }
